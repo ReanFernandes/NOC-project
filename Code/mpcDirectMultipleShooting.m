@@ -1,10 +1,11 @@
-function [X_mpc, U_mpc, timings] = mpcDirectMultipleShooting(Q, R, N, T, modelParams, Tf, intialPose, setPoint1, setPoint2, distVec, initOption)
+function [X_mpc, U_mpc, timings] = mpcDirectMultipleShooting(Q, R, u_max, N, T, modelParams, Tf, intialPose, setPoint1, setPoint2, distVec, initOption)
 % MPC simulation with Direct Multiple Shooting scheme. We take only first
 % control input u*0 in every iteration of MPC. The time for changing
 % setpoint and external disturbance is fixed to N_sim/3 and 2N_sim/3.
 % input:
 %           Q:   Weight matrix for cost of states
 %           R:   Weight matrix for cost of control input
+%       u_max:   Upper bound for control input
 %           N:   Number of control intervals per window
 %           T:   Time horizon
 % modelParams:   Model parameters
@@ -20,7 +21,7 @@ function [X_mpc, U_mpc, timings] = mpcDirectMultipleShooting(Q, R, N, T, modelPa
 %     timings:   Time spent for solving open-loop problem in MPC iterations 
 
 %% Get the formulated NLP
-[solver, w0, lbw, ubw, lbg, ubg] = formulateNLPDirectMultipleShooting(Q, R, N, T, modelParams);
+[solver, w0, lbw, ubw, lbg, ubg] = formulateNLPDirectMultipleShooting(Q, R, u_max, N, T, modelParams);
 % Dimension of variables
 nx = 4; % dimension of state variables
 nu = 1; % dimension of control input

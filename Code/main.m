@@ -37,22 +37,30 @@ d = 3;
 % Matrix for cost function L = (x-setPoint)^T*Q*(x-setPoint) + u^T*R*u
 Q = zeros(nx, nx);
 R = eye(nu);
+% Upper bound for control input
+u_max = 3;
+
+% Initial pose of the pendulum (not every intial pose could lead to 
+% reasonable solution)
+initialPose = [0; pi; 0; 0];
 
 %% Open loop
+% Setpoint for open-loop control
+setPoint = [0; 0; 0; 0];
 % Test open-loop controller for the system
 fprintf('Open-loop control for the system \n');
 % ODE and Direct Multiple Shooting
 fprintf('Open-loop control for the system with ODE and Direct Multiple Shooting... \n');
-[X_odeOL, u_odeOL] = openLoopODE(Q, R, N, T, modelParams);
+[X_odeOL, u_odeOL] = openLoopODE(Q, R, u_max, N, T, initialPose, setPoint, modelParams);
 % DAE and Direct Collocation
 fprintf('Open-loop control for the system with DAE and Direct Collocation... \n');
-[X_daeOL, u_daeOL] = openLoopDAE(d, Q, R, N, T, modelParams);
+[X_daeOL, u_daeOL] = openLoopDAE(d, Q, R, u_max, N, T, initialPose, setPoint, modelParams);
 
 % Plot
 fig = figure();
 % Plot resolution, depends on type of plot
 fig.Position = [10 10 800 600];
-plot2Trajectory(X_odeOL, u_odeOL, h, 'Direct Multiple Shooting', X_daeOL, u_daeOL, h, 'Direct Collocaiton');
+plot2Trajectory(X_odeOL, u_odeOL, h, 'Direct Multiple Shooting', X_daeOL, u_daeOL, h, 'Direct Collocaiton', u_max);
 % Save figure
 saveFigure(fig, savePath, 'OpenLoopControl');
 
@@ -65,9 +73,6 @@ fprintf('Done executing open-loop control \n\n');
 % Test MPC by swinging up the pendulum, changing setpoint and applying an
 % external pulse (i.e. abruptly change in angular velociy of pendulum)
 
-% Initial pose of the pendulum (not every intial pose could lead to 
-% reasonable solution)
-intialPose = [0; pi; 0; 0];
 % Setpoint when pendulum is stable (i.e. finishing swinging up)
 setPoint1 = [pi; 0; 0; 0];
 % Change to this setpoint to test stability
@@ -79,22 +84,22 @@ fprintf('Test MPC with 3 different schemes \n');
 % MPC with 3 different schemes, not use initialization for MPC iterations
 % MPC with Direct Multiple Shooting
 fprintf('Test MPC with Direct Multiple Shooting... \n');
-[X_dmsMPC, U_dmsMPC] = mpcDirectMultipleShooting(Q, R, N, T, modelParams, Tf, intialPose, setPoint1, setPoint2, distVec, 0);
+[X_dmsMPC, U_dmsMPC] = mpcDirectMultipleShooting(Q, R, u_max, N, T, modelParams, Tf, initialPose, setPoint1, setPoint2, distVec, 0);
 
 % MPC with Direct Collocation
 fprintf('Test MPC with Direct Collocation... \n');
-[X_dcMPC, U_dcMPC] = mpcDirectCollocation(d, Q, R, N, T, modelParams, Tf, intialPose, setPoint1, setPoint2, distVec, 0);
+[X_dcMPC, U_dcMPC] = mpcDirectCollocation(d, Q, R, u_max, N, T, modelParams, Tf, initialPose, setPoint1, setPoint2, distVec, 0);
 
 % MPC with RTI
 fprintf('Test MPC with Real Time Iteration... \n');
-[X_rtiMPC, U_rtiMPC] = mpcRealTimeIteration(Q, R, N, T, modelParams, Tf, intialPose, setPoint1, setPoint2, distVec);
+[X_rtiMPC, U_rtiMPC] = mpcRealTimeIteration(Q, R, u_max, N, T, modelParams, Tf, initialPose, setPoint1, setPoint2, distVec);
 
 % Plot
 fig = figure();
 % Plot resolution, depends on type of plot
 fig.Position = [10 10 1200 720];
 plot3Trajectory(X_dmsMPC, U_dmsMPC, h, 'Direct Multiple Shooting', X_dcMPC, U_dcMPC, h, 'Direct Collocation', ...
-    X_rtiMPC, U_rtiMPC, h, 'Real Time Iteration');
+    X_rtiMPC, U_rtiMPC, h, 'Real Time Iteration', u_max);
 % Save figure
 saveFigure(fig, savePath, 'Test3MpcSchemes');
 
@@ -131,13 +136,13 @@ for i=1:length(N_config)
     if (N_test >= 40)
         for j=0:2
             [X_test_dms, U_test_dms, timings_test_dms] = ...
-            mpcDirectMultipleShooting(Q, R, N_test, T, modelParams, Tf, intialPose, setPoint1, setPoint2, distVec, j);
+            mpcDirectMultipleShooting(Q, R, u_max, N_test, T, modelParams, Tf, initialPose, setPoint1, setPoint2, distVec, j);
             timeDMS = sum(timings_test_dms);
             fprintf(['Window Length: N = %d; Initialization Option: %d; MPC Direct Multiple Shooting takes total %.3f seconds, '...
                 'on average %.3f seconds per MPC iteration \n'], N_test, j, timeDMS, timeDMS/length(timings_test_dms));
 
             [X_test_dc, U_test_dc, timings_test_dc] = ...
-            mpcDirectCollocation(d, Q, R, N_test, T, modelParams, Tf, intialPose, setPoint1, setPoint2, distVec, j);
+            mpcDirectCollocation(d, Q, R, u_max, N_test, T, modelParams, Tf, initialPose, setPoint1, setPoint2, distVec, j);
             timeDC = sum(timings_test_dc);
             fprintf(['Window Length: N = %d; Initialization Option: %d, MPC Direct Collocation takes total %.3f seconds, ' ...
                 'on average %.3f seconds per MPC iteration \n'], N_test, j, timeDC, timeDC/length(timings_test_dc));
@@ -149,7 +154,7 @@ for i=1:length(N_config)
             end
 
             [X_test_rti, U_test_rti, timings_test_rti] = ...
-            mpcRealTimeIteration(Q, R, N_test, T, modelParams, Tf, intialPose, setPoint1, setPoint2, distVec);
+            mpcRealTimeIteration(Q, R, u_max, N_test, T, modelParams, Tf, initialPose, setPoint1, setPoint2, distVec);
             timeRTI = sum(timings_test_rti);
             fprintf(['Window Length: N = %d, MPC Real Time Iteration takes total %.3f seconds, on average ' ...
                 '%.3f seconds per MPC iteration \n'], N_test, timeRTI, timeRTI/length(timings_test_rti));
@@ -157,32 +162,39 @@ for i=1:length(N_config)
     else
         for j=0:2
             [X_test_dms, U_test_dms, timings_test_dms] = ...
-            mpcDirectMultipleShooting(Q, R, N_test, T, modelParams, Tf, intialPose, setPoint1, setPoint2, distVec, j);
+            mpcDirectMultipleShooting(Q, R, u_max, N_test, T, modelParams, Tf, initialPose, setPoint1, setPoint2, distVec, j);
             timeDMS = sum(timings_test_dms);
             fprintf(['Window Length: N = %d; Initialization Option: %d; MPC Direct Multiple Shooting takes total %.3f seconds, '...
                 'on average %.3f seconds per MPC iteration \n'], N_test, j, timeDMS, timeDMS/length(timings_test_dms));
 
             [X_test_dc, U_test_dc, timings_test_dc] = ...
-            mpcDirectCollocation(d, Q, R, N_test, T, modelParams, Tf, intialPose, setPoint1, setPoint2, distVec, j);
+            mpcDirectCollocation(d, Q, R, u_max, N_test, T, modelParams, Tf, initialPose, setPoint1, setPoint2, distVec, j);
             timeDC = sum(timings_test_dc);
             fprintf(['Window Length: N = %d; Initialization Option: %d, MPC Direct Collocation takes total %.3f seconds, ' ...
                 'on average %.3f seconds per MPC iteration \n'], N_test, j, timeDC, timeDC/length(timings_test_dc));
+            
+            [X_test_rti, U_test_rti, timings_test_rti] = ...
+            mpcRealTimeIteration(Q, R, u_max, N_test, T, modelParams, Tf, initialPose, setPoint1, setPoint2, distVec);
+            timeRTI = sum(timings_test_rti);
+            fprintf(['Window Length: N = %d, MPC Real Time Iteration takes total %.3f seconds, on average ' ...
+                '%.3f seconds per MPC iteration \n'], N_test, timeRTI, timeRTI/length(timings_test_rti));
             % Plot for initialization option 1
             if (j == 1)
-                X_test_plot_2 = [X_test_plot_2; X_test_dms; X_test_dc];
-                U_test_plot_2 = [U_test_plot_2; U_test_dms; U_test_dc];
+                X_test_plot_2 = [X_test_plot_2; X_test_dms; X_test_rti];
+                U_test_plot_2 = [U_test_plot_2; U_test_dms; U_test_rti];
                 h_test_plot_2 = T/N_test;
             end
         end
     end
 end
 
+% Plot
 fig = figure();
 % Plot resolution, depends on type of plot
 fig.Position = [10 10 1200 720];
 plot3Trajectory(X_test_plot_1, U_test_plot_1, h_test_plot_1, 'Direct Collocation, N = 40', ...
     X_test_plot_2(1:4,:), U_test_plot_2(1,:), h_test_plot_2, 'Direct Multiple Shooting, N = 30', ...
-    X_test_plot_2(5:8,:), U_test_plot_2(2,:), h_test_plot_2, 'Direct Collocation, N = 30');
+    X_test_plot_2(5:8,:), U_test_plot_2(2,:), h_test_plot_2, 'Real Time Iteration, N = 30', u_max);
 % Save figure
 saveFigure(fig, savePath, 'TestRuntime');
 fprintf('Done testing runtime \n\n');
@@ -191,7 +203,6 @@ fprintf('Done testing runtime \n\n');
 N = 30;  % Number of control intervals per window
 h = T/N; % Timestep
 % Setpoint which is not in [-pi, pi]
-intialPose = [0; pi; 0; 0];
 setPoint1 = [5*pi/2; 0; 0; 0];
 setPoint2 = [7*pi/2; 0; 0; 0];
 % Matrix Q for augmented cost function
@@ -199,9 +210,9 @@ Q_aug = diag([0.03; 0.03; 0.03; 0.03; 0.005; 0.005]);
 
 fprintf('Test MPC with angular periodicity \n');
 % MPC which takes angular periodicity into account
-[X_mpcPer, U_mpcPer, timings_mpcPer] = mpcPeriodicity(Q_aug, R, N, T, modelParams, Tf, intialPose, setPoint1, setPoint2, distVec, 2);
+[X_mpcPer, U_mpcPer, timings_mpcPer] = mpcPeriodicity(Q_aug, R, u_max, N, T, modelParams, Tf, initialPose, setPoint1, setPoint2, distVec, 2);
 % Compare with MPC which does not take angular periodicity into account
-[X_mpcNonPer, U_mpcNonPer, timings_mpcNonPer] = mpcDirectMultipleShooting(Q, R, N, T, modelParams, Tf, intialPose, setPoint1, setPoint2, distVec, 2);
+[X_mpcNonPer, U_mpcNonPer, timings_mpcNonPer] = mpcDirectMultipleShooting(Q, R, u_max, N, T, modelParams, Tf, initialPose, setPoint1, setPoint2, distVec, 2);
 
 % Print runtime
 fprintf('Considering periodicity, Direct Multiple Shooting takes total %.3f seconds \n', sum(timings_mpcPer));
@@ -212,7 +223,7 @@ fig = figure();
 % Plot resolution, depends on type of plot
 fig.Position = [10 10 800 600];
 plot2Trajectory(X_mpcPer, U_mpcPer, h, 'Considering Angular Periodicity', ...
-    X_mpcNonPer, U_mpcNonPer, h, 'Not Considering Angular Periodicity');
+    X_mpcNonPer, U_mpcNonPer, h, 'Not Considering Angular Periodicity', u_max);
 % Save figure
 saveFigure(fig, savePath, 'TestPeriodicity');
 

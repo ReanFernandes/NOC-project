@@ -1,10 +1,13 @@
-function [X_daeOL, U_daeOL] = openLoopDAE(d, Q, R, N, T, modelParams)
+function [X_daeOL, U_daeOL] = openLoopDAE(d, Q, R, u_max, N, T, initialPose, setPoint, modelParams)
 % Open-loop with Direct Collocaiton and DAE
 % input:
 %           Q:   Weight matrix for cost of states
 %           R:   Weight matrix for cost of control input
+%       u_max:   Upper bound for control input
 %           N:   Number of control intervals per window
 %           T:   Time horizon
+% initialPose:   Initial pose of the pendulum
+%    setPoint:   Setpoint for open-loop control
 % modelParams:   Model parameters
 % output:
 %     X_daeOL:   State trajectory
@@ -13,11 +16,10 @@ function [X_daeOL, U_daeOL] = openLoopDAE(d, Q, R, N, T, modelParams)
 import casadi.*
 
 %% Get the formulated NLP
-[solver, w0, lbw, ubw, lbg, ubg] = formulateNLPDirectCollocation(d, Q, R, N, T, modelParams);
+[solver, w0, lbw, ubw, lbg, ubg] = formulateNLPDirectCollocation(d, Q, R, u_max, N, T, modelParams);
 
 %% Solve the NLP
-x0 = [0; pi; 0; 0];
-setPoint = [0; 0; 0; 0];
+x0 = initialPose;
 
 sol = solver('x0', w0, 'lbx', lbw, 'ubx', ubw, 'lbg', lbg, 'ubg', ubg, 'p', [x0; setPoint]);
 w_opt = full(sol.x);

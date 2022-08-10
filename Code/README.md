@@ -31,4 +31,4 @@ We implement a Model Predictive Control (MPC) approach using Direct Multiple Sho
 
 This code was partially based in the direct_multiple_shooting.m and direct_collocation.m example from CasADi.
 
-We would like to thank Florian Messerer and Prof. Dr. Moritz Diehl for the supervision in this project.
+We would like to thank Florian Messerer, Andrea Ghezzi and Prof. Dr. Moritz Diehl for the supervision in this project.

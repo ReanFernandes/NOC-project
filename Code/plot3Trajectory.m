@@ -1,4 +1,4 @@
-function [] = plot3Trajectory(X1, U1, h1, pTitle1, X2, U2, h2, pTitle2, X3, U3, h3, pTitle3)
+function [] = plot3Trajectory(X1, U1, h1, pTitle1, X2, U2, h2, pTitle2, X3, U3, h3, pTitle3, u_max)
 % Plot 3 trajectories of the pendulum side by side
 % input:
 %       X1:  Horizontally stacked vectors of state of trajectory 1
@@ -13,6 +13,7 @@ function [] = plot3Trajectory(X1, U1, h1, pTitle1, X2, U2, h2, pTitle2, X3, U3, 
 %       U3:  Horizontally stacked vectors of control input of trajectory 3]
 %       h3:  Time step for trajectory 3
 %  pTitle3:  Title for the plot of trajectory 3
+%    u_max:   Upper bound for control input
 
 N1 = length(U1);
 subplot(431);
@@ -40,7 +41,7 @@ stairs([0:N1-1]*h1, U1, '-');
 ylabel('Input Torque (N.m)', 'FontSize', 10);
 xlabel('Time (s)', 'FontSize', 10);
 legend('$u$', 'Interpreter','latex');
-axis([0 inf -3 3]);
+axis([0 inf -u_max u_max]);
 grid on;
 
 subplot(4,3,10);
@@ -49,7 +50,7 @@ stairs([0:N1-1]*h1, U1, '-');
 ylabel('Input Torque (N.m)', 'FontSize', 10);
 xlabel('Time (s)', 'FontSize', 10);
 legend('$u$', 'Interpreter','latex');
-axis([0 2 -3 3]);
+axis([0 2 -u_max u_max]);
 grid on;
 
 N2 = length(U2);
@@ -78,7 +79,7 @@ stairs([0:N2-1]*h2, U2, '-');
 ylabel('Input Torque (N.m)', 'FontSize', 10);
 xlabel('Time (s)', 'FontSize', 10);
 legend('$u$', 'Interpreter','latex');
-axis([0 inf -3 3]);
+axis([0 inf -u_max u_max]);
 grid on;
 
 subplot(4,3,11);
@@ -87,7 +88,7 @@ stairs([0:N2-1]*h2, U2, '-');
 ylabel('Input Torque (N.m)', 'FontSize', 10);
 xlabel('Time (s)', 'FontSize', 10);
 legend('$u$', 'Interpreter','latex');
-axis([0 2 -3 3]);
+axis([0 2 -u_max u_max]);
 grid on;
 
 N3 = length(U3);
@@ -116,7 +117,7 @@ stairs([0:N3-1]*h3, U3, '-');
 ylabel('Input Torque (N.m)', 'FontSize', 10);
 xlabel('Time (s)', 'FontSize', 10);
 legend('$u$', 'Interpreter','latex');
-axis([0 inf -3 3]);
+axis([0 inf -u_max u_max]);
 grid on;
 
 subplot(4,3,12);
@@ -125,7 +126,7 @@ stairs([0:N3-1]*h3, U3, '-');
 ylabel('Input Torque (N.m)', 'FontSize', 10);
 xlabel('Time (s)', 'FontSize', 10);
 legend('$u$', 'Interpreter','latex');
-axis([0 2 -3 3]);
+axis([0 2 -u_max u_max]);
 grid on;
 
 end

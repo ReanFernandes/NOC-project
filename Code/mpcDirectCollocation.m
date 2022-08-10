@@ -1,4 +1,4 @@
-function [X_mpc, U_mpc, timings] = mpcDirectCollocation(d, Q, R, N, T, modelParams, Tf, intialPose, setPoint1, setPoint2, distVec, initOption)
+function [X_mpc, U_mpc, timings] = mpcDirectCollocation(d, Q, R, u_max, N, T, modelParams, Tf, intialPose, setPoint1, setPoint2, distVec, initOption)
 % MPC simulation with Direct Collocation scheme. We take only first
 % control input u*0 in every iteration of MPC. The time for changing
 % setpoint and external disturbance is fixed to N_sim/3 and 2N_sim/3.
@@ -6,6 +6,7 @@ function [X_mpc, U_mpc, timings] = mpcDirectCollocation(d, Q, R, N, T, modelPara
 %           d:   Degree of interpolating polynomial
 %           Q:   Weight matrix for cost of states
 %           R:   Weight matrix for cost of control input
+%       u_max:   Upper bound for control input
 %           N:   Number of control intervals per window
 %           T:   Time horizon
 % modelParams:   Model parameters
@@ -21,7 +22,7 @@ function [X_mpc, U_mpc, timings] = mpcDirectCollocation(d, Q, R, N, T, modelPara
 %     timings:   Time spent for solving open-loop problem in MPC iterations
 
 %% Get the formulated NLP
-[solver, w0, lbw, ubw, lbg, ubg] = formulateNLPDirectCollocation(d, Q, R, N, T, modelParams);
+[solver, w0, lbw, ubw, lbg, ubg] = formulateNLPDirectCollocation(d, Q, R, u_max, N, T, modelParams);
 % Dimension of variables
 nx = 4; % Dimension of state variables
 nu = 1; % Dimension of control input

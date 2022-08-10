@@ -1,10 +1,13 @@
-function [solver, w0, lbw, ubw, lbg, ubg] = formulateNLPDirectMultipleShooting(Q, R, N, T, modelParams)
+function [solver, w0, lbw, ubw, lbg, ubg] = formulateNLPDirectMultipleShooting(Q, R, u_max, N, T, modelParams)
 % Formulate NLP with Direct Multiple Shooting method.
 % This function is based on CasADi example direct_multiple_shooting.m.
 % This function supports cost function L = (x-setPoint)^T*Q*(x-setPoint) + u^T*R*u
+% with constraint -u_max < u < m_max. If Q == zero(nx,nx), terminal
+% constraint would be activated
 % input:
 %           Q:   Weight matrix for cost of states
 %           R:   Weight matrix for cost of control input
+%       u_max:   Upper bound for control input
 %           N:   Number of control intervals per horizon
 %           T:   Time horizon
 % modelParams:   Model parameters
@@ -68,12 +71,14 @@ lbg = [lbg; 0; 0; 0; 0];
 ubg = [ubg; 0; 0; 0; 0];
 
 Xk = x0_hat;
+
+% Formulate the NLP
 for k=0:N-1
     % New NLP variable for the control
     Uk = MX.sym(['U_' num2str(k)], nu, 1);
     w = [w(:)', {Uk}];
-    lbw = [lbw; -3];
-    ubw = [ubw;  3];
+    lbw = [lbw; -u_max];
+    ubw = [ubw;  u_max];
     w0 = [w0; 0];
 
     % Integrate till the end of the interval
@@ -92,12 +97,12 @@ for k=0:N-1
     g = [g, {Xk_end-Xk}];
     lbg = [lbg; 0; 0; 0; 0];
     ubg = [ubg; 0; 0; 0; 0];
-    % Terminal constraint
-    if (k == N - 1)
-        g = [g, {x_setpoint-Xk}];
-        lbg = [lbg; 0; 0; 0; 0];
-        ubg = [ubg; 0; 0; 0; 0];
-    end
+end
+% Terminal constraint
+if (Q == zeros(nx, nx))
+    g = [g, {x_setpoint-Xk}];
+    lbg = [lbg; 0; 0; 0; 0];
+    ubg = [ubg; 0; 0; 0; 0];
 end
 
 % Create an NLP solver

@@ -1,10 +1,11 @@
-function [solver, w, lbw, ubw, lbg, ubg, f] = formulateNLPRealTimeIteration(Q, R, N, T, modelParams)
+function [solver, w, lbw, ubw, lbg, ubg, f] = formulateNLPRealTimeIteration(Q, R, u_max, N, T, modelParams)
 % Formulate NLP with Real-Time Iteration scheme, based on Exercise 10,
 % Numerical Optimal Control Course SS2022.
-% This function supports cost function L = (x-setPoint)^T*Q*(x-setPoint) + u^T*R*u
+% This function supports cost function L = u^T*R*u
 % input:
 %           Q:   Weight matrix for cost of states
 %           R:   Weight matrix for cost of control input
+%       u_max:   Upper bound for control input
 %           N:   Number of control intervals per horizon
 %           T:   Time horizon
 % modelParams:   Model parameters
@@ -36,7 +37,7 @@ xdot = modelODE(x, u, modelParams);
 
 % Objective term 
 x_setpoint = MX.sym('x_setpoint', nx, 1);
-L = (x-x_setpoint)'*Q*(x-x_setpoint) + u'*R*u;
+L = u'*R*u;
 
 % Integrator
 f = rk4Integrator(x, u, xdot, L, h);
@@ -55,27 +56,21 @@ ubg = [];
 % Multiple shooting
 % Formulate the NLP
 x0_hat = MX.sym('x0_hat', nx, 1);
-
-X0 = MX.sym('X0', nx, 1);
-w = {w{:}, X0};
-% Constraints for x0
+Xk = MX.sym('X0', nx, 1);
+w = {w{:}, Xk};
 lbw = [lbw; -inf; -inf; -inf; -inf];
 ubw = [ubw;  inf;  inf; inf; inf];
-% Initial guess
-w0 = [w0; 0; pi; 0; 0];
 % Equality constraints
-g = {g{:}, X0 - x0_hat};
+g = {g{:}, Xk - x0_hat};
 lbg = [lbg; 0; 0; 0; 0];
 ubg = [ubg; 0; 0; 0; 0];
 
-Xk = x0_hat;
 for k=0:N-1
     % New NLP variable for the control
     Uk = MX.sym(['U_' num2str(k)], nu, 1);
     w = [w(:)', {Uk}];
-    lbw = [lbw; -3];
-    ubw = [ubw;  3];
-    w0 = [w0; 1];
+    lbw = [lbw; -u_max];
+    ubw = [ubw;  u_max];
 
     % Integrate till the end of the interval
     Fk = f('x0', Xk, 'p', Uk);
@@ -87,19 +82,16 @@ for k=0:N-1
     w = [w(:)', {Xk}];
     lbw = [lbw; -inf; -inf; -inf; -inf];
     ubw = [ubw;  inf;  inf; inf; inf];
-    w0 = [w0; 0; 0; 0; 0];
 
     % Add equality constraint
     g = [g, {Xk_end-Xk}];
     lbg = [lbg; 0; 0; 0; 0];
     ubg = [ubg; 0; 0; 0; 0];
-    % Terminal constraint
-    if (k == N - 1)
-        g = [g, {x_setpoint-Xk}];
-        lbg = [lbg; 0; 0; 0; 0];
-        ubg = [ubg; 0; 0; 0; 0];
-    end
 end
+% Terminal constraint
+g = [g, {x_setpoint-Xk}];
+lbg = [lbg; 0; 0; 0; 0];
+ubg = [ubg; 0; 0; 0; 0];
 
 % Create an NLP solver
 w = vertcat(w{:});

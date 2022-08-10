@@ -1,12 +1,15 @@
-function [solver, w0, lbw, ubw, lbg, ubg] = formulateNLPDirectCollocation(d, Q, R, N, T, modelParams)
+function [solver, w0, lbw, ubw, lbg, ubg] = formulateNLPDirectCollocation(d, Q, R, u_max, N, T, modelParams)
 % Formulate NLP for direct collocation for DAE.
 % This is based on CasADi example "direct_collocation.m" and 
-% on chapter 14.4.2, Manuscript of Numerical Optimal Control Course SS2022.
+% on chapter 14.4.3, Manuscript of Numerical Optimal Control Course SS2022.
 % This function supports cost function L = (x-setPoint)^T*Q*(x-setPoint) + u^T*R*u
+% with constraint -u_max < u < m_max. If Q == zero(nx,nx), terminal
+% constraint would be activated
 % input:
 %           d:   Degree of interpolating polynomial
 %           Q:   Weight matrix for cost of states
 %           R:   Weight matrix for cost of control input
+%       u_max:   Upper bound for control input
 %           N:   Number of control intervals per horizon
 %           T:   Time horizon
 % modelParams:   Model parameters
@@ -84,8 +87,8 @@ for k=0:N-1
     % New NLP variable for the control
     Uk = MX.sym(['U_' num2str(k)], nu, 1);
     w = {w{:}, Uk};
-    lbw = [lbw; -3];
-    ubw = [ubw; 3];
+    lbw = [lbw; -u_max];
+    ubw = [ubw; u_max];
     w0 = [w0; 0];
 
     % State at collocation points
@@ -143,12 +146,12 @@ for k=0:N-1
     g = {g{:}, Xk_end-Xk};
     lbg = [lbg; 0; 0; 0; 0];
     ubg = [ubg; 0; 0; 0; 0];
-    % Terminal constraint
-    if (k == N-1)
-        g = [g, {x_setpoint-Xk}];
-        lbg = [lbg; 0; 0; 0; 0];
-        ubg = [ubg; 0; 0; 0; 0];
-    end
+end
+% Terminal constraint
+if (Q == zeros(nx, nx))
+    g = [g, {x_setpoint-Xk}];
+    lbg = [lbg; 0; 0; 0; 0];
+    ubg = [ubg; 0; 0; 0; 0];
 end
 
 % Create an NLP solver

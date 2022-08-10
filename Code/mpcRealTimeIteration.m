@@ -1,10 +1,11 @@
-function [X_mpc, U_mpc, timings] = mpcRealTimeIteration(Q, R, N, T, modelParams, Tf, initialPose, setPoint1, setPoint2, distVec)
+function [X_mpc, U_mpc, timings] = mpcRealTimeIteration(Q, R, u_max, N, T, modelParams, Tf, initialPose, setPoint1, setPoint2, distVec)
 % MPC simulation with RTI scheme. We take only first control input u*0 in 
 % every iteration of MPC. The time for changing setpoint and external
 % disturbance is fixed to N_sim/3 and 2N_sim/3.
 % input:
 %           Q:   Weight matrix for cost of states
 %           R:   Weight matrix for cost of control input
+%       u_max:   Upper bound for control input
 %           N:   Number of control intervals per window
 %           T:   Time horizon
 % modelParams:   Model parameters
@@ -20,7 +21,7 @@ function [X_mpc, U_mpc, timings] = mpcRealTimeIteration(Q, R, N, T, modelParams,
 %     timings:   Time spent for solving open-loop problem in MPC iterations
 
 %% Get the formulated NLP
-[solver, w, lbw, ubw, lbg, ubg, f] = formulateNLPRealTimeIteration(Q, R, N, T, modelParams);
+[solver, w, lbw, ubw, lbg, ubg, f] = formulateNLPRealTimeIteration(Q, R, u_max, N, T, modelParams);
 % Dimension of variables
 nx = 4; % dimension of state variables
 nu = 1; % dimension of control input
@@ -37,6 +38,8 @@ iters = zeros(length(w),N_sim);
 X_mpc = zeros(nx,N_sim);
 U_mpc = zeros(nu,N_sim);
 X_mpc(:,1) = x0;
+% linearization points are very important
+iters(1:4, 1) = x0;
 
 timings = zeros(N_sim,1);
 

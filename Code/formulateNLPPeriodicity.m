@@ -1,10 +1,11 @@
-function [solver, w0, lbw, ubw, lbg, ubg] = formulateNLPPeriodicity(Q_aug, R, N, T, modelParams)
+function [solver, w0, lbw, ubw, lbg, ubg] = formulateNLPPeriodicity(Q_aug, R, u_max, N, T, modelParams)
 % Formulate NLP and take angular periodicity into account by augmenting
 % cost function. Direct Multiple Shooting scheme is used here
 % See below for details of augmented cost function 
 % input:
 %       Q_aug:   Weight matrix for augmented cost of states
 %           R:   Weight matrix for cost of control input
+%       u_max:   Upper bound for control input
 %           N:   Number of control intervals per horizon
 %           T:   Time horizon
 % modelParams:   Model parameters
@@ -78,8 +79,8 @@ for k=0:N-1
     % New NLP variable for the control
     Uk = MX.sym(['U_' num2str(k)], nu, 1);
     w = [w(:)', {Uk}];
-    lbw = [lbw; -3];
-    ubw = [ubw;  3];
+    lbw = [lbw; -u_max];
+    ubw = [ubw;  u_max];
     w0 = [w0; 0];
 
     % Integrate till the end of the interval
