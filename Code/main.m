@@ -65,8 +65,8 @@ plot2Trajectory(X_odeOL, u_odeOL, h, 'Direct Multiple Shooting', X_daeOL, u_daeO
 saveFigure(fig, savePath, 'OpenLoopControl');
 
 % Animate the pendulum (optional, take long time)
-% animateIP(X_odeOL, h, L1, L2, 'OpenLoopMultipleShooting.gif');
-% animateIP(X_daeOL, h, L1, L2, 'OpenLoopDirectCollocation.gif');
+% animateIP(X_odeOL, h, L1, L2, savePath, 'OpenLoopMultipleShooting.gif');
+% animateIP(X_daeOL, h, L1, L2, savePath, 'OpenLoopDirectCollocation.gif');
 fprintf('Done executing open-loop control \n\n');
 
 %% MPC Simulation
@@ -104,9 +104,9 @@ plot3Trajectory(X_dmsMPC, U_dmsMPC, h, 'Direct Multiple Shooting', X_dcMPC, U_dc
 saveFigure(fig, savePath, 'Test3MpcSchemes');
 
 % Animate the pendulum (optional, take long time)
-% animateIP(X_dmsMPC, h, L1, L2, 'MpcMultipleShooting.gif');
-% animateIP(X_dcMPC, h, L1, L2, 'MpcDirectCollocation.gif');
-% animateIP(X_rtiMPC, h, L1, L2, 'MpcRTI.gif');
+% animateIP(X_dmsMPC, h, L1, L2, savePath, 'MpcMultipleShooting.gif');
+% animateIP(X_dcMPC, h, L1, L2, savePath, 'MpcDirectCollocation.gif');
+% animateIP(X_rtiMPC, h, L1, L2, savePath, 'MpcRTI.gif');
 fprintf('Done testing different MPC schemes \n\n');
 
 %% Test runtime with different configurations
@@ -228,8 +228,8 @@ plot2Trajectory(X_mpcPer, U_mpcPer, h, 'Considering Angular Periodicity', ...
 saveFigure(fig, savePath, 'TestPeriodicity');
 
 % Animate the pendulum (optional, take long time)
-% animateIP(X_mpcPer, h, L1, L2, 'MpcAngularPeriodicity.gif');
-% animateIP(X_mpcNonPer, h, L1, L2, 'MpcAngularNonPeriodicity.gif');
+% animateIP(X_mpcPer, h, L1, L2, savePath, 'MpcAngularPeriodicity.gif');
+% animateIP(X_mpcNonPer, h, L1, L2, savePath, 'MpcAngularNonPeriodicity.gif');
 fprintf('Done testing MPC with angular periodicity \n\n');
 
 %% Helper function for plot saving

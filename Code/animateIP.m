@@ -1,4 +1,4 @@
-function [] = animateIP(states, dt, L1, L2, fileName, savePath)
+function [] = animateIP(states, dt, L1, L2, savePath, fileName)
 % Animate the double inverted pendulum trajectory, creates a .gif file.
 % This is based on "animatePendulum.m" file in exercise 6,
 % Numerical Optimal Control Course SS2022
@@ -8,8 +8,8 @@ function [] = animateIP(states, dt, L1, L2, fileName, savePath)
 %           dt:   Timestep between succesive values of theta (in animation)
 %           L1:   Length of rotary arm
 %           L2:   Length of pendulum
-%     fileName:   Filename of created gif (string)
 %     savePath:   Location where gif file is saved
+%     fileName:   Filename of created gif (string)
 
 if ~isfolder(savePath)
     mkdir(savePath);
@@ -21,8 +21,9 @@ first_it = true;
 % could be seen easier in the animation
 X_ani = states;
 X_ani = [repmat(states(:, 1), 1, 20), X_ani];
+fig = figure();
 for x = X_ani
-    figure(100); clf; hold on;
+    clf; hold on;
 
     [x1, y1, z1, x2, y2, z2] = getEndpointPosition(x(1), x(2), L1, L2);
 
